@@ -214,14 +214,24 @@ public class CertCheck extends CordovaPlugin {
     // check if frida-server process is running
     private boolean detectFridaProcess() {
         try {
-            Process p = Runtime.getRuntime().exec("ps");
+            // NOTE: use fully-qualified java.lang.Process to avoid clash with
+            // android.os.Process
+            java.lang.Process p = Runtime.getRuntime().exec("ps");
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
 
             while ((line = in.readLine()) != null) {
                 if (line.contains("frida") || line.contains("frida-server") || line.contains("gum")) {
+                    try {
+                        in.close();
+                    } catch (Exception ignored) {
+                    }
                     return true;
                 }
+            }
+            try {
+                in.close();
+            } catch (Exception ignored) {
             }
         } catch (Exception ignored) {
         }
@@ -231,14 +241,22 @@ public class CertCheck extends CordovaPlugin {
     // check default frida ports
     private boolean detectFridaPort() {
         try {
-            Process p = Runtime.getRuntime().exec("netstat -an");
+            java.lang.Process p = Runtime.getRuntime().exec("netstat -an");
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
 
             while ((line = in.readLine()) != null) {
                 if (line.contains(":27042") || line.contains(":27043")) {
+                    try {
+                        in.close();
+                    } catch (Exception ignored) {
+                    }
                     return true;
                 }
+            }
+            try {
+                in.close();
+            } catch (Exception ignored) {
             }
         } catch (Exception ignored) {
         }
