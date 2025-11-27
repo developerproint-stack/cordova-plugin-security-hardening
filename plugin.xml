@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin id="cordova-plugin-security-hardening"
+        version="1.0.0"
+        xmlns="http://apache.org/cordova/ns/plugins"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <name>CertCheck</name>
+
+    <js-module src="www/certcheck.js" name="CertCheck">
+        <clobbers target="CertCheck" />
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="CertCheck">
+                <param name="android-package" value="com.proint.security.CertCheck" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/CertCheck.java" target-dir="src/com/proint/security" />
+
+        <framework src="com.google.android.play:core:1.10.3" />
+        <!-- play-integrity dependency may be added manually in app gradle if required -->
+    </platform>
+
+</plugin>
