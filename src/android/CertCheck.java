@@ -22,6 +22,7 @@ import java.util.Iterator;
 
 public class CertCheck extends CordovaPlugin {
     private static final String TAG = "CertCheck";
+    private static boolean fridaMonitorRunning = false;
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
@@ -256,16 +257,21 @@ public class CertCheck extends CordovaPlugin {
 
     // === ADDED: background monitor ===
     private void startFridaMonitor() {
+        if (fridaMonitorRunning) {
+            return; // ignore jika sudah jalan
+        }
+        fridaMonitorRunning = true;
+
+        // Start thread monitor
         new Thread(() -> {
             while (true) {
+                if (detectFridaFull()) {
+                    forceCloseApp();
+                    break;
+                }
                 try {
-                    if (detectFridaFull()) {
-                        Log.e(TAG, "FRIDA DETECTED - EXITING");
-                        forceCloseApp();
-                        return;
-                    }
-                    Thread.sleep(2000);
-                } catch (Exception ignored) {
+                    Thread.sleep(3000);
+                } catch (Exception e) {
                 }
             }
         }).start();
