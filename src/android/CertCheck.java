@@ -10,11 +10,13 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.os.Build;
+import android.os.Process;
 import android.util.Log;
 
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.security.MessageDigest;
 import java.util.Iterator;
 
@@ -23,6 +25,7 @@ public class CertCheck extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+
         if ("validateCert".equals(action)) {
             String expected = args.getString(0);
             String actual = getCertificateSHA256();
@@ -59,6 +62,14 @@ public class CertCheck extends CordovaPlugin {
             return true;
         }
 
+        // === ADDED: start background anti-Frida monitor ===
+        if ("startFridaMonitor".equals(action)) {
+            startFridaMonitor();
+            callbackContext.success("FRIDA_MONITOR_STARTED");
+            return true;
+        }
+        // === END ADDED ===
+
         return false;
     }
 
@@ -66,7 +77,7 @@ public class CertCheck extends CordovaPlugin {
         try {
             String expected = options.optString("expectedSHA256", null);
             String wwwManifest = options.optString("wwwHashManifest", null);
-            boolean frida = detectFrida();
+            boolean frida = detectFridaFull();
             boolean xposed = detectXposed();
             boolean debug = isDebuggerAttached();
 
@@ -95,16 +106,6 @@ public class CertCheck extends CordovaPlugin {
                 }
             }
 
-            // Optionally, request Play Integrity token and return it to JS for server
-            // verification
-            if (options.has("requestPlayIntegrity") && options.getBoolean("requestPlayIntegrity")) {
-                // This is a stub: actual implementation requires Play Integrity client
-                // and async flow. For demo, return a placeholder string; integrate real code in
-                // production.
-                callback.success("ALL_OK_NO_PLAY_TOKEN_STUB");
-                return;
-            }
-
             callback.success("ALL_OK");
 
         } catch (Exception e) {
@@ -119,7 +120,6 @@ public class CertCheck extends CordovaPlugin {
             PackageInfo pkg;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                // Android 9+
                 pkg = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
                 Signature[] signatures = pkg.signingInfo.getApkContentsSigners();
 
@@ -130,7 +130,6 @@ public class CertCheck extends CordovaPlugin {
                 md.update(signatures[0].toByteArray());
                 return bytesToHex(md.digest());
             } else {
-                // Android 7–8 fallback
                 pkg = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNATURES);
                 Signature[] signatures = pkg.signatures;
 
@@ -149,7 +148,6 @@ public class CertCheck extends CordovaPlugin {
     }
 
     private boolean validateWwwHashes(String manifestJson) {
-        // manifestJson format: { "index.html": "AABB..", "js/main.js": "BBCC.." }
         try {
             JSONObject obj = new JSONObject(manifestJson);
             Iterator<String> keys = obj.keys();
@@ -185,8 +183,16 @@ public class CertCheck extends CordovaPlugin {
         }
     }
 
+    // =============================================================================
+    // === ADDED: FULL ANTI-FRIDA SUITE (process, libs, ports)
+    // =============================================================================
+
+    private boolean detectFridaFull() {
+        return detectFrida() || detectFridaProcess() || detectFridaPort();
+    }
+
+    // original basic detection (keeping your code)
     private boolean detectFrida() {
-        // Heuristic checks for frida server / injected frida:
         try {
             String[] suspicious = new String[] { "frida", "gum", "fridaserver" };
             BufferedReader br = new BufferedReader(new FileReader("/proc/self/maps"));
@@ -200,13 +206,77 @@ public class CertCheck extends CordovaPlugin {
             }
             br.close();
         } catch (Exception e) {
-            /* ignore */ }
+        }
         return false;
     }
 
+    // check if frida-server process is running
+    private boolean detectFridaProcess() {
+        try {
+            Process p = Runtime.getRuntime().exec("ps");
+            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+
+            while ((line = in.readLine()) != null) {
+                if (line.contains("frida") || line.contains("frida-server") || line.contains("gum")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    // check default frida ports
+    private boolean detectFridaPort() {
+        try {
+            Process p = Runtime.getRuntime().exec("netstat -an");
+            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+
+            while ((line = in.readLine()) != null) {
+                if (line.contains(":27042") || line.contains(":27043")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    // === ADDED: hard kill app ===
+    private void forceCloseApp() {
+        Activity a = this.cordova.getActivity();
+        a.runOnUiThread(() -> {
+            a.finishAffinity();
+            Process.killProcess(Process.myPid());
+            System.exit(0);
+        });
+    }
+
+    // === ADDED: background monitor ===
+    private void startFridaMonitor() {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    if (detectFridaFull()) {
+                        Log.e(TAG, "FRIDA DETECTED - EXITING");
+                        forceCloseApp();
+                        return;
+                    }
+                    Thread.sleep(2000);
+                } catch (Exception ignored) {
+                }
+            }
+        }).start();
+    }
+
+    // =============================================================================
+    // END ADDED
+    // =============================================================================
+
     private boolean detectXposed() {
         try {
-            // common Xposed classes
             Class.forName("de.robv.android.xposed.XposedBridge");
             return true;
         } catch (Throwable t) {
@@ -225,11 +295,6 @@ public class CertCheck extends CordovaPlugin {
     }
 
     private void requestPlayIntegrityToken(String nonce, CallbackContext callback) {
-        // STUB: implement Play Integrity API call here.
-        // Production: use
-        // IntegrityManagerFactory.create(activity).requestIntegrityToken(request);
-        // then handle async success/failure and return the token to JS for server-side
-        // verification.
         callback.success("PLAY_TOKEN_STUB");
     }
 
