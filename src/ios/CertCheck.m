@@ -83,33 +83,34 @@
 #pragma mark - Anti-Frida: Detect runtime usage
 
 - (BOOL)detectFrida {
-    // Common Frida thread names start with "gum-"
-    thread_act_array_t threads;
-    mach_msg_type_number_t threadCount = 0;
+    // Method 1: Check suspicious environment variables
+    NSDictionary* env = [[NSProcessInfo processInfo] environment];
+    for (NSString *key in env) {
+        if ([key.lowercaseString containsString:@"frida"] ||
+            [key.lowercaseString containsString:@"gum"]) {
+            NSLog(@"[CertCheck] Suspicious env variable: %@", key);
+            return YES;
+        }
+    }
 
-    task_threads(mach_task_self(), &threads, &threadCount);
+    // Method 2: Check loaded libs (gum-js-loop appears here)
+    uint32_t count = _dyld_image_count();
+    for (uint32_t i = 0; i < count; i++) {
+        const char *name = _dyld_get_image_name(i);
+        if (!name) continue;
 
-    for (int i = 0; i < threadCount; i++) {
-        thread_t thread = threads[i];
-
-        char name[256];
-        pthread_t pthread = pthread_from_mach_thread_np(thread);
-        if (pthread) {
-            pthread_getname_np(pthread, name, sizeof(name));
-
-            NSString *threadName = [NSString stringWithUTF8String:name];
-
-            if ([threadName containsString:@"gum"] ||
-                [threadName containsString:@"frida"]) {
-
-                NSLog(@"[CertCheck] Suspicious thread detected: %@", threadName);
-                return YES;
-            }
+        NSString *lib = [NSString stringWithUTF8String:name];
+        if ([lib containsString:@"frida"] ||
+            [lib containsString:@"gum"] ||
+            [lib containsString:@"gadget"]) {
+            NSLog(@"[CertCheck] Frida lib detected: %@", lib);
+            return YES;
         }
     }
 
     return NO;
 }
+
 
 #pragma mark - Anti-Debugging
 
