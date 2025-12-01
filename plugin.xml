@@ -13,6 +13,7 @@
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="CertCheck">
+                <param name="ios-package" value="CertCheck" />
                 <param name="android-package" value="com.proint.security.CertCheck" />
             </feature>
         </config-file>
