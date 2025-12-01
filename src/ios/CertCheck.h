@@ -2,6 +2,10 @@
 
 @interface CertCheck : CDVPlugin
 
-- (void)startFridaMonitor;
+// Cordova-exposed command
+- (void)startFridaMonitor:(CDVInvokedUrlCommand*)command;
+
+// Internal helper
+- (void)startFridaMonitorInternal;
 
 @end
