@@ -20,5 +20,8 @@
         <source-file src="src/android/CertCheck.java" target-dir="src/com/proint/security" />
         <!-- play-integrity dependency may be added manually in app gradle if required -->
     </platform>
-
+    <platform name="ios">
+        <source-file src="src/ios/CertCheck.m" />
+        <source-file src="src/ios/CertCheck.h" />
+    </platform>
 </plugin>
