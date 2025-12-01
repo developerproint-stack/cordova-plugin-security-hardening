@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <plugin id="cordova-plugin-security-hardening"
-        version="1.0.1"
+        version="1.0.0"
         xmlns="http://apache.org/cordova/ns/plugins"
         xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -11,19 +11,26 @@
         <clobbers target="CertCheck" />
     </js-module>
 
-    <!-- FEATURE mapping harus di luar blok platform -->
-    <feature name="CertCheck">
-        <param name="android-package" value="com.proint.security.CertCheck" />
-        <param name="ios-package" value="CertCheck" />
-    </feature>
-
-    <!-- Android files -->
+    <!-- ANDROID -->
     <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="CertCheck">
+                <param name="android-package" value="com.proint.security.CertCheck" />
+            </feature>
+        </config-file>
+
         <source-file src="src/android/CertCheck.java" target-dir="src/com/proint/security" />
     </platform>
 
-    <!-- iOS files -->
+    <!-- IOS -->
     <platform name="ios">
+        <!-- INI YANG PENTING UNTUK MAPPING DI iOS -->
+        <config-file target="config.xml" parent="/*">
+            <feature name="CertCheck">
+                <param name="ios-package" value="CertCheck" />
+            </feature>
+        </config-file>
+
         <source-file src="src/ios/CertCheck.m" />
         <source-file src="src/ios/CertCheck.h" />
     </platform>
