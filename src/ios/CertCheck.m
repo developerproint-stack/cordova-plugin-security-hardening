@@ -101,7 +101,7 @@
 
         NSString *lib = [NSString stringWithUTF8String:name];
         if ([lib containsString:@"frida"] ||
-            [lib containsString:@"gum"] ||
+            [lib containsString:@"frida-gadget"] ||
             [lib containsString:@"gadget"]) {
             NSLog(@"[CertCheck] Frida lib detected: %@", lib);
             return YES;
