@@ -84,19 +84,26 @@ public class PlayIntegrityManager {
 
         task.addOnSuccessListener(activity, response -> {
 
-            Log.d(TAG, "SUCCESS");
+            Log.e("PI_DEBUG", "========== SUCCESS CALLBACK ==========");
 
             String token = response.token();
 
-            Log.d(TAG, "Token Length = " +
-                    (token == null ? 0 : token.length()));
+            Log.e("PI_DEBUG",
+                    "Token Length = " +
+                            (token == null ? 0 : token.length()));
 
-            activity.runOnUiThread(() -> listener.onSuccess(token));
+            activity.runOnUiThread(() -> {
+
+                Log.e("PI_DEBUG", "Calling listener.onSuccess()");
+
+                listener.onSuccess(token);
+
+            });
 
         });
 
         task.addOnFailureListener(activity, e -> {
-
+            Log.e("PI_DEBUG", "========== FAILURE CALLBACK ==========");
             int code = ERROR_REQUEST_FAILED;
             String message;
 
@@ -125,9 +132,13 @@ public class PlayIntegrityManager {
             final int finalCode = code;
             final String finalMessage = message;
 
-            activity.runOnUiThread(() -> listener.onFailure(
-                    finalCode,
-                    finalMessage));
+            activity.runOnUiThread(() -> {
+
+                Log.e("PI_DEBUG", "Calling listener.onFailure()");
+
+                listener.onFailure(finalCode, finalMessage);
+
+            });
 
         });
 

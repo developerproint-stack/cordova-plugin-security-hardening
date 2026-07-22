@@ -1,5 +1,11 @@
 package com.proint.security;
 
+import android.AssetHashUtil;
+import android.CertificateUtil;
+import android.DebuggerDetector;
+import android.FridaDetector;
+import android.PlayIntegrityManager;
+import android.XposedDetector;
 import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
@@ -26,6 +32,8 @@ public class CertCheck extends CordovaPlugin {
             JSONArray args,
             CallbackContext callback)
             throws JSONException {
+
+        Log.e("PI_DEBUG", "execute() action = " + action);
 
         switch (action) {
 
@@ -225,6 +233,9 @@ public class CertCheck extends CordovaPlugin {
     private void requestPlayIntegrityToken(
             String nonce,
             CallbackContext callback) {
+
+        Log.e("PI_DEBUG", "requestPlayIntegrityToken() dipanggil");
+        Log.e("PI_DEBUG", "Nonce = " + nonce);
 
         PlayIntegrityManager manager = new PlayIntegrityManager(cordova.getActivity());
 
