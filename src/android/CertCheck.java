@@ -1,335 +1,352 @@
 package com.proint.security;
 
-import org.apache.cordova.*;
+import android.AssetHashUtil;
+import android.CertificateUtil;
+import android.DebuggerDetector;
+import android.FridaDetector;
+import android.PlayIntegrityManager;
+import android.XposedDetector;
+import android.util.Log;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.os.Build;
-import android.os.Process;
-import android.util.Log;
-
-import java.io.InputStream;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStreamReader;
-import java.security.MessageDigest;
-import java.util.Iterator;
-
 public class CertCheck extends CordovaPlugin {
+
     private static final String TAG = "CertCheck";
+
+    public static final String ACTION_VALIDATE_CERT = "validateCert";
+    public static final String ACTION_VALIDATE_WWW = "validateWwwHashes";
+    public static final String ACTION_FULL_CHECK = "runFullCheck";
+    public static final String ACTION_PLAY_INTEGRITY = "requestPlayIntegrityToken";
+    public static final String ACTION_START_FRIDA_MONITOR = "startFridaMonitor";
+
     private static boolean fridaMonitorRunning = false;
 
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(
+            String action,
+            JSONArray args,
+            CallbackContext callback)
+            throws JSONException {
 
-        if ("validateCert".equals(action)) {
-            String expected = args.getString(0);
-            String actual = getCertificateSHA256();
-            if (actual == null) {
-                callbackContext.error("Unable to read certificate");
+        switch (action) {
+
+            case ACTION_VALIDATE_CERT:
+
+                validateCertificate(args, callback);
                 return true;
-            }
-            if (actual.equalsIgnoreCase(expected))
-                callbackContext.success("MATCHED");
-            else
-                callbackContext.error("MISMATCH:" + actual);
-            return true;
+
+            case ACTION_VALIDATE_WWW:
+
+                validateAssets(args, callback);
+                return true;
+
+            case ACTION_FULL_CHECK:
+
+                JSONObject options = args.getJSONObject(0);
+                runFullCheck(options, callback);
+                return true;
+
+            case ACTION_PLAY_INTEGRITY:
+
+                String nonce = args.getString(0);
+
+                requestPlayIntegrityToken(
+                        nonce,
+                        callback);
+
+                return true;
+
+            case ACTION_START_FRIDA_MONITOR:
+
+                startFridaMonitor();
+
+                callback.success("FRIDA_MONITOR_STARTED");
+
+                return true;
+
+            default:
+
+                callback.error("Unknown action : " + action);
+
+                return false;
+
         }
 
-        if ("validateWwwHashes".equals(action)) {
-            String manifestJson = args.getString(0);
-            boolean ok = validateWwwHashes(manifestJson);
-            if (ok)
-                callbackContext.success("WWW_OK");
-            else
-                callbackContext.error("WWW_MISMATCH");
-            return true;
-        }
-
-        if ("runFullCheck".equals(action)) {
-            JSONObject options = args.getJSONObject(0);
-            runFullCheck(options, callbackContext);
-            return true;
-        }
-
-        if ("requestPlayIntegrityToken".equals(action)) {
-            String nonce = args.getString(0);
-            requestPlayIntegrityToken(nonce, callbackContext);
-            return true;
-        }
-
-        // === ADDED: start background anti-Frida monitor ===
-        if ("startFridaMonitor".equals(action)) {
-            startFridaMonitor();
-            callbackContext.success("FRIDA_MONITOR_STARTED");
-            return true;
-        }
-        // === END ADDED ===
-
-        return false;
     }
 
-    private void runFullCheck(JSONObject options, CallbackContext callback) {
-        try {
-            String expected = options.optString("expectedSHA256", null);
-            String wwwManifest = options.optString("wwwHashManifest", null);
-            boolean frida = detectFridaFull();
-            boolean xposed = detectXposed();
-            boolean debug = isDebuggerAttached();
+    // ==========================================================
+    // Validate Certificate
+    // ==========================================================
 
-            if (frida || xposed || debug) {
-                JSONObject res = new JSONObject();
-                res.put("frida", frida);
-                res.put("xposed", xposed);
-                res.put("debugger", debug);
-                callback.error(res.toString());
+    private void validateCertificate(
+            JSONArray args,
+            CallbackContext callback)
+            throws JSONException {
+
+        String expected = args.getString(0);
+
+        String actual = CertificateUtil.getCertificateSHA256(
+                cordova.getActivity());
+
+        if (actual == null) {
+
+            callback.error("Unable to read certificate");
+
+            return;
+
+        }
+
+        if (expected.equalsIgnoreCase(actual)) {
+
+            callback.success("MATCHED");
+
+        } else {
+
+            callback.error("MISMATCH:" + actual);
+
+        }
+
+    }
+
+    // ==========================================================
+    // Validate WWW
+    // ==========================================================
+
+    private void validateAssets(
+            JSONArray args,
+            CallbackContext callback)
+            throws JSONException {
+
+        String manifest = args.getString(0);
+
+        boolean ok = AssetHashUtil.validateWwwHashes(
+                cordova.getActivity(),
+                manifest);
+
+        if (ok) {
+
+            callback.success("WWW_OK");
+
+        } else {
+
+            callback.error("WWW_MISMATCH");
+
+        }
+
+    }
+
+    // ==========================================================
+    // Full Security Check
+    // ==========================================================
+
+    private void runFullCheck(
+            JSONObject options,
+            CallbackContext callback) {
+
+        try {
+
+            String expectedSHA256 = options.optString(
+                    "expectedSHA256",
+                    null);
+
+            String wwwManifest = options.optString(
+                    "wwwHashManifest",
+                    null);
+
+            boolean frida = FridaDetector.detect();
+
+            boolean xposed = XposedDetector.detect();
+
+            boolean debugger = DebuggerDetector.detect();
+
+            if (frida || xposed || debugger) {
+
+                JSONObject obj = new JSONObject();
+
+                obj.put("frida", frida);
+                obj.put("xposed", xposed);
+                obj.put("debugger", debugger);
+
+                callback.error(obj.toString());
+
                 return;
+
             }
 
-            if (expected != null) {
-                String actual = getCertificateSHA256();
-                if (!expected.equalsIgnoreCase(actual)) {
-                    callback.error("CERT_MISMATCH:" + actual);
+            if (expectedSHA256 != null) {
+
+                String actual = CertificateUtil.getCertificateSHA256(
+                        cordova.getActivity());
+
+                if (!expectedSHA256.equalsIgnoreCase(actual)) {
+
+                    callback.error(
+                            "CERT_MISMATCH:" + actual);
+
                     return;
+
                 }
+
             }
 
             if (wwwManifest != null) {
-                boolean ok = validateWwwHashes(wwwManifest);
+
+                boolean ok = AssetHashUtil.validateWwwHashes(
+                        cordova.getActivity(),
+                        wwwManifest);
+
                 if (!ok) {
+
                     callback.error("WWW_MISMATCH");
+
                     return;
+
                 }
+
             }
 
             callback.success("ALL_OK");
 
-        } catch (Exception e) {
-            callback.error("ERROR:" + e.getMessage());
+        } catch (Exception ex) {
+
+            Log.e(TAG,
+                    "runFullCheck",
+                    ex);
+
+            callback.error(
+                    "ERROR:" + ex.getMessage());
+
         }
+
     }
+    // ==========================================================
+    // Play Integrity
+    // ==========================================================
 
-    private String getCertificateSHA256() {
-        try {
-            Activity activity = this.cordova.getActivity();
-            PackageManager pm = activity.getPackageManager();
-            PackageInfo pkg;
+    private void requestPlayIntegrityToken(
+            String nonce,
+            CallbackContext callback) {
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                pkg = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
-                Signature[] signatures = pkg.signingInfo.getApkContentsSigners();
+        PlayIntegrityManager manager = new PlayIntegrityManager(
+                cordova.getActivity());
 
-                if (signatures == null || signatures.length == 0)
-                    return null;
+        manager.requestToken(
+                nonce,
+                new PlayIntegrityManager.Listener() {
 
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                md.update(signatures[0].toByteArray());
-                return bytesToHex(md.digest());
-            } else {
-                pkg = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNATURES);
-                Signature[] signatures = pkg.signatures;
+                    @Override
+                    public void onSuccess(String token) {
 
-                if (signatures == null || signatures.length == 0)
-                    return null;
+                        callback.success(token);
 
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                md.update(signatures[0].toByteArray());
-                return bytesToHex(md.digest());
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "getCertificateSHA256 fail", e);
-            return null;
-        }
-    }
-
-    private boolean validateWwwHashes(String manifestJson) {
-        try {
-            JSONObject obj = new JSONObject(manifestJson);
-            Iterator<String> keys = obj.keys();
-            while (keys.hasNext()) {
-                String path = keys.next();
-                String expected = obj.getString(path);
-                String actual = calcAssetHash(path);
-                if (actual == null)
-                    return false;
-                if (!expected.equalsIgnoreCase(actual))
-                    return false;
-            }
-            return true;
-        } catch (Exception e) {
-            Log.e(TAG, "validateWwwHashes error", e);
-            return false;
-        }
-    }
-
-    private String calcAssetHash(String assetPath) {
-        try {
-            InputStream is = this.cordova.getActivity().getAssets().open("www/" + assetPath);
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] buffer = new byte[4096];
-            int read;
-            while ((read = is.read(buffer)) != -1)
-                md.update(buffer, 0, read);
-            is.close();
-            return bytesToHex(md.digest());
-        } catch (Exception e) {
-            Log.e(TAG, "calcAssetHash error for " + assetPath, e);
-            return null;
-        }
-    }
-
-    // =============================================================================
-    // === ADDED: FULL ANTI-FRIDA SUITE (process, libs, ports)
-    // =============================================================================
-
-    private boolean detectFridaFull() {
-        return detectFrida() || detectFridaProcess() || detectFridaPort();
-    }
-
-    // original basic detection (keeping your code)
-    private boolean detectFrida() {
-        try {
-            String[] suspicious = new String[] { "frida", "gum", "fridaserver" };
-            BufferedReader br = new BufferedReader(new FileReader("/proc/self/maps"));
-            String line;
-            while ((line = br.readLine()) != null) {
-                for (String s : suspicious)
-                    if (line.contains(s)) {
-                        br.close();
-                        return true;
                     }
-            }
-            br.close();
-        } catch (Exception e) {
-        }
-        return false;
-    }
 
-    // check if frida-server process is running
-    private boolean detectFridaProcess() {
-        try {
-            // NOTE: use fully-qualified java.lang.Process to avoid clash with
-            // android.os.Process
-            java.lang.Process p = Runtime.getRuntime().exec("ps");
-            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
+                    @Override
+                    public void onFailure(int code, String message) {
 
-            while ((line = in.readLine()) != null) {
-                if (line.contains("frida") || line.contains("frida-server") || line.contains("gum")) {
-                    try {
-                        in.close();
-                    } catch (Exception ignored) {
+                        try {
+
+                            JSONObject obj = new JSONObject();
+
+                            obj.put("code", code);
+                            obj.put("message", message);
+
+                            callback.error(obj.toString());
+
+                        } catch (Exception ex) {
+
+                            callback.error(message);
+
+                        }
+
                     }
-                    return true;
-                }
-            }
-            try {
-                in.close();
-            } catch (Exception ignored) {
-            }
-        } catch (Exception ignored) {
-        }
-        return false;
+
+                });
     }
+    // ==========================================================
+    // Frida Background Monitor
+    // ==========================================================
 
-    // check default frida ports
-    private boolean detectFridaPort() {
-        try {
-            java.lang.Process p = Runtime.getRuntime().exec("netstat -an");
-            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line;
-
-            while ((line = in.readLine()) != null) {
-                if (line.contains(":27042") || line.contains(":27043")) {
-                    try {
-                        in.close();
-                    } catch (Exception ignored) {
-                    }
-                    return true;
-                }
-            }
-            try {
-                in.close();
-            } catch (Exception ignored) {
-            }
-        } catch (Exception ignored) {
-        }
-        return false;
-    }
-
-    // === ADDED: hard kill app ===
-    private void forceCloseApp() {
-        Activity a = this.cordova.getActivity();
-        a.runOnUiThread(() -> {
-            a.finishAffinity();
-            Process.killProcess(Process.myPid());
-            System.exit(0);
-        });
-    }
-
-    // === ADDED: background monitor ===
     private void startFridaMonitor() {
+
         if (fridaMonitorRunning) {
-            return; // ignore jika sudah jalan
+            return;
         }
+
         fridaMonitorRunning = true;
 
-        // Start thread monitor
-        new Thread(() -> {
+        Thread monitor = new Thread(() -> {
+
             while (true) {
-                if (detectFridaFull()) {
-                    forceCloseApp();
-                    break;
-                }
+
                 try {
+
+                    if (FridaDetector.detect()) {
+
+                        Log.e(TAG,
+                                "Frida detected.");
+
+                        forceCloseApp();
+
+                        break;
+
+                    }
+
                     Thread.sleep(3000);
-                } catch (Exception e) {
+
+                } catch (Exception ex) {
+
+                    Log.e(TAG,
+                            "Frida monitor error",
+                            ex);
+
                 }
+
             }
-        }).start();
+
+        });
+
+        monitor.setName("FridaMonitor");
+        monitor.setDaemon(true);
+        monitor.start();
     }
 
-    // =============================================================================
-    // END ADDED
-    // =============================================================================
+    // ==========================================================
+    // Force Close
+    // ==========================================================
 
-    private boolean detectXposed() {
-        try {
-            Class.forName("de.robv.android.xposed.XposedBridge");
-            return true;
-        } catch (Throwable t) {
-        }
-        try {
-            java.io.File f = new java.io.File("/system/framework/XposedBridge.jar");
-            if (f.exists())
-                return true;
-        } catch (Exception e) {
-        }
-        return false;
-    }
+    private void forceCloseApp() {
 
-    private boolean isDebuggerAttached() {
-        return android.os.Debug.isDebuggerConnected() || android.os.Debug.waitingForDebugger();
-    }
+        cordova.getActivity().runOnUiThread(() -> {
 
-    private void requestPlayIntegrityToken(String nonce, CallbackContext callback) {
-        callback.success("PLAY_TOKEN_STUB");
-    }
+            try {
 
-    private String bytesToHex(byte[] hash) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : hash) {
-            String hex = Integer.toHexString(0xff & b).toUpperCase();
-            if (hex.length() == 1)
-                hexString.append('0');
-            hexString.append(hex);
-        }
-        return hexString.toString();
+                cordova.getActivity().finishAffinity();
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                android.os.Process.killProcess(
+                        android.os.Process.myPid());
+
+            } catch (Exception ignored) {
+            }
+
+            try {
+
+                System.exit(0);
+
+            } catch (Exception ignored) {
+            }
+
+        });
+
     }
 }

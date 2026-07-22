@@ -1,7 +1,7 @@
 {
     "name": "cordova-plugin-security-hardening",
-    "version": "1.0.0",
-    "description": "Security hardening plugin for Cordova (certificate validation, www hash integrity, anti-frida, anti-xposed, debugger detection, Play Integrity stub).",
+    "version": "1.1.0",
+    "description": "Security hardening plugin for Cordova including certificate validation, asset integrity verification, Frida detection, Xposed detection, debugger detection, and Google Play Integrity support.",
     "cordova": {
         "id": "cordova-plugin-security-hardening",
         "platforms": [
@@ -10,14 +10,16 @@
     },
     "keywords": [
         "cordova",
-        "security",
         "android",
+        "security",
+        "hardening",
         "certificate",
         "integrity",
+        "play-integrity",
         "frida",
         "xposed",
-        "hardening"
+        "debugger"
     ],
-    "author": "sutjahyo gunasetiawan",
-    "license": "MIT"
+    "author": "Sutjahyo Gunasetiawan",
+    "license": "Commercial"
 }

@@ -1,38 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <plugin id="cordova-plugin-security-hardening"
-        version="1.0.0"
+        version="1.1.0"
         xmlns="http://apache.org/cordova/ns/plugins"
         xmlns:android="http://schemas.android.com/apk/res/android">
 
     <name>CertCheck</name>
 
-    <!-- JS bridge -->
-    <js-module src="www/certcheck.js" name="CertCheck">
-        <clobbers target="CertCheck" />
+    <description>
+        Pro-Int Security Hardening Plugin
+    </description>
+
+    <license>Commercial</license>
+
+    <keywords>
+        security,integrity,playintegrity,certificate,frida,xposed
+    </keywords>
+
+    <!-- ========================================================= -->
+    <!-- Javascript -->
+    <!-- ========================================================= -->
+
+    <js-module src="www/certcheck.js"
+               name="CertCheck">
+
+        <clobbers target="CertCheck"/>
+
     </js-module>
 
-    <!-- ANDROID -->
+    <!-- ========================================================= -->
+    <!-- Android -->
+    <!-- ========================================================= -->
+
     <platform name="android">
-        <config-file target="res/xml/config.xml" parent="/*">
+
+        <!-- Register Plugin -->
+
+        <config-file target="res/xml/config.xml"
+                     parent="/*">
+
             <feature name="CertCheck">
-                <param name="android-package" value="com.proint.security.CertCheck" />
+
+                <param name="android-package"
+                       value="com.proint.security.CertCheck"/>
+
             </feature>
+
         </config-file>
 
-        <source-file src="src/android/CertCheck.java" target-dir="src/com/proint/security" />
+        <!-- ===================================================== -->
+        <!-- Google Play Integrity -->
+        <!-- ===================================================== -->
+
+        <framework src="com.google.android.play:integrity:1.6.0" />
+
+        <!-- ===================================================== -->
+        <!-- Java Sources -->
+        <!-- ===================================================== -->
+
+        <source-file
+            src="src/android/CertCheck.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/PlayIntegrityManager.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/CertificateUtil.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/AssetHashUtil.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/FridaDetector.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/XposedDetector.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/DebuggerDetector.java"
+            target-dir="src/com/proint/security"/>
     </platform>
 
-    <!-- IOS -->
+    <!-- ========================================================= -->
+    <!-- iOS -->
+    <!-- ========================================================= -->
+
     <platform name="ios">
-        <!-- INI YANG PENTING UNTUK MAPPING DI iOS -->
-        <config-file target="config.xml" parent="/*">
+
+        <config-file target="config.xml"
+                     parent="/*">
+
             <feature name="CertCheck">
-                <param name="ios-package" value="CertCheck" />
+
+                <param name="ios-package"
+                       value="CertCheck"/>
+
             </feature>
+
         </config-file>
 
-        <source-file src="src/ios/CertCheck.m" />
-        <source-file src="src/ios/CertCheck.h" />
+        <source-file src="src/ios/CertCheck.h"/>
+        <source-file src="src/ios/CertCheck.m"/>
+
     </platform>
 
 </plugin>
