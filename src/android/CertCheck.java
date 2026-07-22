@@ -226,37 +226,39 @@ public class CertCheck extends CordovaPlugin {
             String nonce,
             CallbackContext callback) {
 
-        PlayIntegrityManager manager = new PlayIntegrityManager(
-                cordova.getActivity());
+        PlayIntegrityManager manager = new PlayIntegrityManager(cordova.getActivity());
 
-        manager.requestToken(
-                nonce,
+        manager.requestToken(nonce,
                 new PlayIntegrityManager.Listener() {
 
                     @Override
                     public void onSuccess(String token) {
 
-                        callback.success(token);
+                        cordova.getActivity().runOnUiThread(() -> callback.success(token));
 
                     }
 
                     @Override
                     public void onFailure(int code, String message) {
 
-                        try {
+                        cordova.getActivity().runOnUiThread(() -> {
 
-                            JSONObject obj = new JSONObject();
+                            try {
 
-                            obj.put("code", code);
-                            obj.put("message", message);
+                                JSONObject obj = new JSONObject();
 
-                            callback.error(obj.toString());
+                                obj.put("code", code);
+                                obj.put("message", message);
 
-                        } catch (Exception ex) {
+                                callback.error(obj.toString());
 
-                            callback.error(message);
+                            } catch (Exception ex) {
 
-                        }
+                                callback.error(message);
+
+                            }
+
+                        });
 
                     }
 
