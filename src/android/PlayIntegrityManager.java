@@ -88,6 +88,8 @@ public class PlayIntegrityManager {
 
             String token = response.token();
 
+            Log.d(TAG, "Token = " + token);
+
             Log.e("PI_DEBUG",
                     "Token Length = " +
                             (token == null ? 0 : token.length()));
