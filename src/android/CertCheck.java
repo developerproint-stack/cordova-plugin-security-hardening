@@ -1,13 +1,5 @@
 package com.proint.security;
 
-import android.AssetHashUtil;
-import android.CertificateUtil;
-import android.DebuggerDetector;
-import android.FridaDetector;
-import android.PlayIntegrityManager;
-import android.XposedDetector;
-import android.util.Log;
-
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
