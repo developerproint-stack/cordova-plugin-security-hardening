@@ -17,95 +17,46 @@ public class CertificateUtil {
     }
 
     public static String getCertificateSHA256(Context context) {
-
         try {
-
             PackageManager pm = context.getPackageManager();
-
-            PackageInfo packageInfo;
+            PackageInfo pkg;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pkg = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNING_CERTIFICATES);
+                Signature[] signatures = pkg.signingInfo.getApkContentsSigners();
 
-                packageInfo = pm.getPackageInfo(
-                        context.getPackageName(),
-                        PackageManager.GET_SIGNING_CERTIFICATES);
-
-                if (packageInfo.signingInfo == null) {
+                if (signatures == null || signatures.length == 0)
                     return null;
-                }
 
-                Signature[] signatures;
-
-                if (packageInfo.signingInfo.hasMultipleSigners()) {
-
-                    signatures = packageInfo.signingInfo.getApkContentsSigners();
-
-                } else {
-
-                    signatures = packageInfo.signingInfo.getSigningCertificateHistory();
-
-                }
-
-                if (signatures == null || signatures.length == 0) {
-                    return null;
-                }
-
-                return sha256(signatures[0]);
-
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                md.update(signatures[0].toByteArray());
+                return bytesToHex(md.digest());
             } else {
+                pkg = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES);
+                Signature[] signatures = pkg.signatures;
 
-                packageInfo = pm.getPackageInfo(
-                        context.getPackageName(),
-                        PackageManager.GET_SIGNATURES);
-
-                Signature[] signatures = packageInfo.signatures;
-
-                if (signatures == null || signatures.length == 0) {
+                if (signatures == null || signatures.length == 0)
                     return null;
-                }
 
-                return sha256(signatures[0]);
-
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                md.update(signatures[0].toByteArray());
+                return bytesToHex(md.digest());
             }
 
-        } catch (Exception ex) {
-
-            ex.printStackTrace();
-
+        } catch (Exception e) {
+            e.printStackTrace();
             return null;
-
         }
-
     }
 
-    private static String sha256(Signature signature) throws Exception {
-
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-        Certificate cert = cf.generateCertificate(
-                new java.io.ByteArrayInputStream(
-                        signature.toByteArray()));
-
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-        byte[] digest = md.digest(((X509Certificate) cert).getEncoded());
-
-        return bytesToHex(digest);
-
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (byte b : bytes) {
-
-            sb.append(String.format("%02X", b));
-
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b).toUpperCase();
+            if (hex.length() == 1)
+                hexString.append('0');
+            hexString.append(hex);
         }
-
-        return sb.toString();
-
+        return hexString.toString();
     }
-
 }

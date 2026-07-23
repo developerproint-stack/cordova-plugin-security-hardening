@@ -84,18 +84,15 @@ public class AssetHashUtil {
 
     }
 
-    private static String bytesToHex(byte[] bytes) {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (byte b : bytes) {
-
-            sb.append(String.format("%02X", b));
-
+    private static String bytesToHex(byte[] hash) {
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b).toUpperCase();
+            if (hex.length() == 1)
+                hexString.append('0');
+            hexString.append(hex);
         }
-
-        return sb.toString();
-
+        return hexString.toString();
     }
 
 }
