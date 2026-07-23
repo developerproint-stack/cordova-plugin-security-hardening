@@ -43,12 +43,7 @@ public class PlayIntegrityManager {
             @NonNull String nonce,
             @NonNull Listener listener) {
 
-        Log.e(TAG, "========== REQUEST START ==========");
-        Log.e(TAG, "Nonce = " + nonce);
-
         if (nonce == null || nonce.trim().isEmpty()) {
-
-            Log.e(TAG, "Nonce kosong");
 
             activity.runOnUiThread(() -> listener.onFailure(
                     ERROR_INVALID_NONCE,
@@ -63,8 +58,6 @@ public class PlayIntegrityManager {
 
         if (status != ConnectionResult.SUCCESS) {
 
-            Log.e(TAG, "Google Play Services Error = " + status);
-
             activity.runOnUiThread(() -> listener.onFailure(
                     ERROR_PLAY_SERVICES,
                     "Google Play Services not available : " + status));
@@ -76,27 +69,13 @@ public class PlayIntegrityManager {
                 .setNonce(nonce)
                 .build();
 
-        Log.e(TAG, "Calling requestIntegrityToken()");
-
         Task<IntegrityTokenResponse> task = integrityManager.requestIntegrityToken(request);
-
-        Log.e(TAG, "requestIntegrityToken() returned Task");
 
         task.addOnSuccessListener(activity, response -> {
 
-            Log.e("PI_DEBUG", "========== SUCCESS CALLBACK ==========");
-
             String token = response.token();
 
-            Log.e("PI_DEBUG", "Token = " + token);
-
-            Log.e("PI_DEBUG",
-                    "Token Length = " +
-                            (token == null ? 0 : token.length()));
-
             activity.runOnUiThread(() -> {
-
-                Log.e("PI_DEBUG", "Calling listener.onSuccess()");
 
                 listener.onSuccess(token);
 
@@ -105,7 +84,6 @@ public class PlayIntegrityManager {
         });
 
         task.addOnFailureListener(activity, e -> {
-            Log.e("PI_DEBUG", "========== FAILURE CALLBACK ==========");
             int code = ERROR_REQUEST_FAILED;
             String message;
 
@@ -116,7 +94,7 @@ public class PlayIntegrityManager {
                 code = ex.getErrorCode();
                 message = ex.getMessage();
 
-                Log.e(TAG,
+                Log.d(TAG,
                         "IntegrityServiceException"
                                 + " Code=" + code,
                         ex);
@@ -125,7 +103,7 @@ public class PlayIntegrityManager {
 
                 message = e.toString();
 
-                Log.e(TAG,
+                Log.d(TAG,
                         "Unknown Exception",
                         e);
 
@@ -135,16 +113,11 @@ public class PlayIntegrityManager {
             final String finalMessage = message;
 
             activity.runOnUiThread(() -> {
-
-                Log.e("PI_DEBUG", "Calling listener.onFailure()");
-
                 listener.onFailure(finalCode, finalMessage);
 
             });
 
         });
-
-        Log.e(TAG, "========== REQUEST SENT ==========");
 
     }
 

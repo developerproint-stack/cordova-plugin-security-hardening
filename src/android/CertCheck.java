@@ -26,8 +26,6 @@ public class CertCheck extends CordovaPlugin {
             CallbackContext callback)
             throws JSONException {
 
-        Log.e("PI_DEBUG", "execute() action = " + action);
-
         switch (action) {
 
             case ACTION_VALIDATE_CERT:
@@ -208,11 +206,6 @@ public class CertCheck extends CordovaPlugin {
             callback.success("ALL_OK");
 
         } catch (Exception ex) {
-
-            Log.e(TAG,
-                    "runFullCheck",
-                    ex);
-
             callback.error(
                     "ERROR:" + ex.getMessage());
 
@@ -226,10 +219,6 @@ public class CertCheck extends CordovaPlugin {
     private void requestPlayIntegrityToken(
             String nonce,
             CallbackContext callback) {
-
-        Log.e("PI_DEBUG", "requestPlayIntegrityToken() dipanggil");
-        Log.e("PI_DEBUG", "Nonce = " + nonce);
-
         PlayIntegrityManager manager = new PlayIntegrityManager(cordova.getActivity());
 
         manager.requestToken(nonce,
@@ -287,10 +276,6 @@ public class CertCheck extends CordovaPlugin {
                 try {
 
                     if (FridaDetector.detect()) {
-
-                        Log.e(TAG,
-                                "Frida detected.");
-
                         forceCloseApp();
 
                         break;
@@ -301,7 +286,7 @@ public class CertCheck extends CordovaPlugin {
 
                 } catch (Exception ex) {
 
-                    Log.e(TAG,
+                    Log.d(TAG,
                             "Frida monitor error",
                             ex);
 
