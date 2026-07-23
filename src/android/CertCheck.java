@@ -5,6 +5,13 @@ import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.AssetHashUtil;
+import android.CertificateUtil;
+import android.DebuggerDetector;
+import android.FridaDetector;
+import android.PlayIntegrityManager;
+import android.XposedDetector;
 import android.util.Log;
 
 public class CertCheck extends CordovaPlugin {
@@ -156,6 +163,10 @@ public class CertCheck extends CordovaPlugin {
             boolean xposed = XposedDetector.detect();
 
             boolean debugger = DebuggerDetector.detect();
+
+            Log.e("CHECK", "frida=" + frida);
+            Log.e("CHECK", "xposed=" + xposed);
+            Log.e("CHECK", "debug=" + debug);
 
             if (frida || xposed || debugger) {
 
