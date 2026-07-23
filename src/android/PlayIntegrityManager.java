@@ -43,8 +43,8 @@ public class PlayIntegrityManager {
             @NonNull String nonce,
             @NonNull Listener listener) {
 
-        Log.d(TAG, "========== REQUEST START ==========");
-        Log.d(TAG, "Nonce = " + nonce);
+        Log.e(TAG, "========== REQUEST START ==========");
+        Log.e(TAG, "Nonce = " + nonce);
 
         if (nonce == null || nonce.trim().isEmpty()) {
 
@@ -76,11 +76,11 @@ public class PlayIntegrityManager {
                 .setNonce(nonce)
                 .build();
 
-        Log.d(TAG, "Calling requestIntegrityToken()");
+        Log.e(TAG, "Calling requestIntegrityToken()");
 
         Task<IntegrityTokenResponse> task = integrityManager.requestIntegrityToken(request);
 
-        Log.d(TAG, "requestIntegrityToken() returned Task");
+        Log.e(TAG, "requestIntegrityToken() returned Task");
 
         task.addOnSuccessListener(activity, response -> {
 
@@ -88,7 +88,7 @@ public class PlayIntegrityManager {
 
             String token = response.token();
 
-            Log.d("PI_DEBUG", "Token = " + token);
+            Log.e("PI_DEBUG", "Token = " + token);
 
             Log.e("PI_DEBUG",
                     "Token Length = " +
@@ -144,7 +144,7 @@ public class PlayIntegrityManager {
 
         });
 
-        Log.d(TAG, "========== REQUEST SENT ==========");
+        Log.e(TAG, "========== REQUEST SENT ==========");
 
     }
 
