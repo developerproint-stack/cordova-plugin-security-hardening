@@ -59,6 +59,16 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        if (fingerprint.contains("virtual")) {
+            score += 3;
+        }
+        if (fingerprint.contains("vmware")) {
+            score += 3;
+        }
+        if (fingerprint.contains("qemu")) {
+            score += 3;
+        }
+
         // ==========================================================
         // Model
         // ==========================================================
@@ -81,6 +91,16 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        if (model.contains("virtual")) {
+            score += 3;
+        }
+        if (model.contains("vmware")) {
+            score += 3;
+        }
+        if (model.contains("qemu")) {
+            score += 3;
+        }
+
         // ==========================================================
         // Manufacturer
         // ==========================================================
@@ -91,6 +111,16 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        if (manufacturer.contains("virtual")) {
+            score += 3;
+        }
+        if (manufacturer.contains("vmware")) {
+            score += 3;
+        }
+        if (manufacturer.contains("qemu")) {
+            score += 3;
+        }
+
         // ==========================================================
         // Brand
         // ==========================================================
@@ -99,6 +129,15 @@ public class EmulatorDetector {
 
         if (brand.startsWith("generic")) {
             score += 1;
+        }
+        if (brand.contains("virtual")) {
+            score += 3;
+        }
+        if (brand.contains("vmware")) {
+            score += 3;
+        }
+        if (brand.contains("qemu")) {
+            score += 3;
         }
 
         // ==========================================================
@@ -131,6 +170,16 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        if (device.contains("virtual")) {
+            score += 3;
+        }
+        if (device.contains("vmware")) {
+            score += 3;
+        }
+        if (device.contains("qemu")) {
+            score += 3;
+        }
+
         // ==========================================================
         // Hardware
         // ==========================================================
@@ -151,6 +200,16 @@ public class EmulatorDetector {
 
         if (hardware.contains("qemu")) {
             score += 2;
+        }
+
+        if (hardware.contains("virtual")) {
+            score += 3;
+        }
+        if (hardware.contains("vmware")) {
+            score += 3;
+        }
+        if (hardware.contains("qemu")) {
+            score += 3;
         }
 
         // ==========================================================
@@ -183,6 +242,16 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        if (product.contains("virtual")) {
+            score += 3;
+        }
+        if (product.contains("vmware")) {
+            score += 3;
+        }
+        if (product.contains("qemu")) {
+            score += 3;
+        }
+
         // ==========================================================
         // Common Emulator Files
         // ==========================================================
@@ -199,12 +268,61 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        // ==========================================================
+        // Host
+        // ==========================================================
+
         String host = safe(Build.HOST);
 
         if (host.contains("kvm")) {
             score += 3;
         }
+        if (host.contains("compiler")) {
+            score += 3;
+        }
+        if (host.contains("virtual")) {
+            score += 3;
+        }
+        if (host.contains("vmware")) {
+            score += 3;
+        }
+        if (host.contains("qemu")) {
+            score += 3;
+        }
 
+        // ==========================================================
+        // Radio
+        // ==========================================================
+
+        String radio = safe(Build.getRadioVersion());
+
+        if (radio.contains("kvm")) {
+            score += 3;
+        }
+        if (radio.contains("virtual")) {
+            score += 3;
+        }
+        if (radio.contains("vmware")) {
+            score += 3;
+        }
+        if (radio.contains("qemu")) {
+            score += 3;
+        }
+
+        String user = safe(Build.USER);
+
+        if (host.contains("kvm")) {
+            score += 3;
+        }
+        if (host.contains("virtual")) {
+            score += 3;
+        }
+        if (host.contains("vmware")) {
+            score += 3;
+        }
+        if (host.contains("qemu")) {
+            score += 3;
+        }
         /*
          * Do not use /system/bin/microdroid as a standalone
          * emulator indicator. It can exist in legitimate Android
