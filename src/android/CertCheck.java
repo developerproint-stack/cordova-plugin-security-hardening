@@ -158,6 +158,13 @@ public class CertCheck extends CordovaPlugin {
 
             boolean debugger = DebuggerDetector.detect();
 
+            boolean emulator = EmulatorDetector.isEmulator();
+
+            if (emulator) {
+                callback.error("Emulator");
+                return;
+            }
+
             if (frida || xposed || debugger) {
 
                 JSONObject obj = new JSONObject();
