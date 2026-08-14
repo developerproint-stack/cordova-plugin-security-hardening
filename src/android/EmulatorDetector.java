@@ -199,6 +199,12 @@ public class EmulatorDetector {
             score += 2;
         }
 
+        String host = safe(Build.HOST);
+
+        if (host.contains("kvm")) {
+            score += 3;
+        }
+
         /*
          * Do not use /system/bin/microdroid as a standalone
          * emulator indicator. It can exist in legitimate Android
