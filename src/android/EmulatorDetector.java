@@ -11,200 +11,231 @@ public class EmulatorDetector {
     }
 
     /**
-     * Returns true if the device shows multiple common emulator indicators.
+     * Returns true if the device shows multiple strong emulator indicators.
+     *
+     * The detector intentionally avoids weak indicators such as:
+     * - "unknown"
+     * - "test-keys"
+     * - generic Android brand values
+     *
+     * These values can legitimately exist on real devices.
      */
     public static boolean isEmulator() {
+        return getEmulatorScore() >= 3;
+    }
+
+    /**
+     * Calculates emulator score based on common emulator indicators.
+     *
+     * Strong indicators are weighted higher.
+     */
+    public static int getEmulatorScore() {
+
         int score = 0;
 
-        // Build fingerprint
-        String fingerprint = Build.FINGERPRINT != null
-                ? Build.FINGERPRINT.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
+        // Build Fingerprint
+        // ==========================================================
 
-        if (fingerprint.contains("generic")
-                || fingerprint.contains("unknown")
-                || fingerprint.contains("emulator")
-                || fingerprint.contains("test-keys")
-                || fingerprint.contains("goldfish")
-                || fingerprint.contains("ranchu")) {
+        String fingerprint = safe(Build.FINGERPRINT);
+
+        if (fingerprint.contains("generic")) {
             score += 2;
         }
 
+        if (fingerprint.contains("emulator")) {
+            score += 2;
+        }
+
+        if (fingerprint.contains("goldfish")) {
+            score += 2;
+        }
+
+        if (fingerprint.contains("ranchu")) {
+            score += 2;
+        }
+
+        if (fingerprint.contains("sdk_gphone")) {
+            score += 2;
+        }
+
+        // ==========================================================
         // Model
-        String model = Build.MODEL != null
-                ? Build.MODEL.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (model.contains("sdk")
-                || model.contains("emulator")
-                || model.contains("android sdk")
-                || model.contains("google_sdk")
-                || model.contains("virtual")) {
+        String model = safe(Build.MODEL);
+
+        if (model.contains("sdk")) {
             score += 2;
         }
 
+        if (model.contains("emulator")) {
+            score += 2;
+        }
+
+        if (model.contains("android sdk")) {
+            score += 2;
+        }
+
+        if (model.contains("google_sdk")) {
+            score += 2;
+        }
+
+        // ==========================================================
         // Manufacturer
-        String manufacturer = Build.MANUFACTURER != null
-                ? Build.MANUFACTURER.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (manufacturer.contains("genymotion")
-                || manufacturer.contains("unknown")) {
+        String manufacturer = safe(Build.MANUFACTURER);
+
+        if (manufacturer.contains("genymotion")) {
             score += 2;
         }
 
+        // ==========================================================
         // Brand
-        String brand = Build.BRAND != null
-                ? Build.BRAND.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (brand.startsWith("generic")
-                || brand.contains("android")
-                || brand.contains("unknown")) {
+        String brand = safe(Build.BRAND);
+
+        if (brand.startsWith("generic")) {
             score += 1;
         }
 
+        // ==========================================================
         // Device
-        String device = Build.DEVICE != null
-                ? Build.DEVICE.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (device.contains("generic")
-                || device.contains("emulator")
-                || device.contains("goldfish")
-                || device.contains("ranchu")
-                || device.contains("vbox")) {
+        String device = safe(Build.DEVICE);
+
+        if (device.contains("generic")) {
             score += 2;
         }
 
+        if (device.contains("emulator")) {
+            score += 2;
+        }
+
+        if (device.contains("goldfish")) {
+            score += 2;
+        }
+
+        if (device.contains("ranchu")) {
+            score += 2;
+        }
+
+        if (device.contains("vbox")) {
+            score += 2;
+        }
+
+        if (device.contains("sdk_gphone")) {
+            score += 2;
+        }
+
+        // ==========================================================
         // Hardware
-        String hardware = Build.HARDWARE != null
-                ? Build.HARDWARE.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (hardware.contains("goldfish")
-                || hardware.contains("ranchu")
-                || hardware.contains("vbox")
-                || hardware.contains("virtual")) {
+        String hardware = safe(Build.HARDWARE);
+
+        if (hardware.contains("goldfish")) {
             score += 2;
         }
 
+        if (hardware.contains("ranchu")) {
+            score += 2;
+        }
+
+        if (hardware.contains("vbox")) {
+            score += 2;
+        }
+
+        if (hardware.contains("qemu")) {
+            score += 2;
+        }
+
+        // ==========================================================
         // Product
-        String product = Build.PRODUCT != null
-                ? Build.PRODUCT.toLowerCase(Locale.US)
-                : "";
+        // ==========================================================
 
-        if (product.contains("sdk")
-                || product.contains("emulator")
-                || product.contains("simulator")
-                || product.contains("vbox")
-                || product.contains("goldfish")
-                || product.contains("ranchu")) {
+        String product = safe(Build.PRODUCT);
+
+        if (product.contains("sdk")) {
             score += 2;
         }
 
-        // Common emulator files
-        if (exists("/dev/qemu_pipe")
-                || exists("/dev/qemu_trace")
-                || exists("/system/bin/qemu-props")
-                || exists("/system/bin/microdroid")) {
+        if (product.contains("emulator")) {
+            score += 2;
+        }
+
+        if (product.contains("simulator")) {
+            score += 2;
+        }
+
+        if (product.contains("vbox")) {
+            score += 2;
+        }
+
+        if (product.contains("goldfish")) {
+            score += 2;
+        }
+
+        if (product.contains("ranchu")) {
+            score += 2;
+        }
+
+        // ==========================================================
+        // Common Emulator Files
+        // ==========================================================
+
+        if (exists("/dev/qemu_pipe")) {
+            score += 2;
+        }
+
+        if (exists("/dev/qemu_trace")) {
+            score += 2;
+        }
+
+        if (exists("/system/bin/qemu-props")) {
             score += 2;
         }
 
         /*
-         * Require multiple indicators instead of a single match.
-         * This reduces false positives on real devices.
+         * Do not use /system/bin/microdroid as a standalone
+         * emulator indicator. It can exist in legitimate Android
+         * environments.
          */
-        return score >= 3;
-    }
 
-    private static boolean exists(String path) {
-        try {
-            return new File(path).exists();
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * Useful for debugging/testing.
-     */
-    public static int getEmulatorScore() {
-        int score = 0;
-
-        String fingerprint = safe(Build.FINGERPRINT);
-        String model = safe(Build.MODEL);
-        String manufacturer = safe(Build.MANUFACTURER);
-        String brand = safe(Build.BRAND);
-        String device = safe(Build.DEVICE);
-        String hardware = safe(Build.HARDWARE);
-        String product = safe(Build.PRODUCT);
-
-        if (fingerprint.contains("generic")
-                || fingerprint.contains("unknown")
-                || fingerprint.contains("emulator")
-                || fingerprint.contains("test-keys")
-                || fingerprint.contains("goldfish")
-                || fingerprint.contains("ranchu")) {
-            score += 2;
-        }
-
-        if (model.contains("sdk")
-                || model.contains("emulator")
-                || model.contains("android sdk")
-                || model.contains("google_sdk")
-                || model.contains("virtual")) {
-            score += 2;
-        }
-
-        if (manufacturer.contains("genymotion")
-                || manufacturer.contains("unknown")) {
-            score += 2;
-        }
-
-        if (brand.startsWith("generic")
-                || brand.contains("android")
-                || brand.contains("unknown")) {
-            score += 1;
-        }
-
-        if (device.contains("generic")
-                || device.contains("emulator")
-                || device.contains("goldfish")
-                || device.contains("ranchu")
-                || device.contains("vbox")) {
-            score += 2;
-        }
-
-        if (hardware.contains("goldfish")
-                || hardware.contains("ranchu")
-                || hardware.contains("vbox")
-                || hardware.contains("virtual")) {
-            score += 2;
-        }
-
-        if (product.contains("sdk")
-                || product.contains("emulator")
-                || product.contains("simulator")
-                || product.contains("vbox")
-                || product.contains("goldfish")
-                || product.contains("ranchu")) {
-            score += 2;
-        }
-
-        if (exists("/dev/qemu_pipe")
-                || exists("/dev/qemu_trace")
-                || exists("/system/bin/qemu-props")
-                || exists("/system/bin/microdroid")) {
-            score += 2;
-        }
+        // ==========================================================
+        // Return Score
+        // ==========================================================
 
         return score;
     }
 
+    /**
+     * Checks whether a file/path exists.
+     */
+    private static boolean exists(String path) {
+
+        try {
+
+            return new File(path).exists();
+
+        } catch (Exception e) {
+
+            return false;
+
+        }
+    }
+
+    /**
+     * Safely converts Build values to lowercase.
+     */
     private static String safe(String value) {
+
         return value == null
                 ? ""
                 : value.toLowerCase(Locale.US);
+
     }
 }
