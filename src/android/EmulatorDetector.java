@@ -5,7 +5,7 @@ import android.os.Build;
 import java.io.File;
 import java.util.Locale;
 
-public final class EmulatorDetector {
+public class EmulatorDetector {
 
     private EmulatorDetector() {
     }

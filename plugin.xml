@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <plugin id="cordova-plugin-security-hardening"
-        version="1.1.0"
+        version="1.1.1"
         xmlns="http://apache.org/cordova/ns/plugins"
         xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -84,6 +84,10 @@
 
         <source-file
             src="src/android/DebuggerDetector.java"
+            target-dir="src/com/proint/security"/>
+
+        <source-file
+            src="src/android/EmulatorDetector.java"
             target-dir="src/com/proint/security"/>
     </platform>
 
