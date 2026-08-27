@@ -13,21 +13,22 @@ public class EmulatorDetector {
     /**
      * Returns true if the device shows multiple strong emulator indicators.
      *
-     * The detector intentionally avoids weak indicators such as:
-     * - "unknown"
-     * - "test-keys"
-     * - generic Android brand values
+     * Weak/common values such as:
+     * - unknown
+     * - test-keys
+     * - kvm
+     * - root
+     * - compiler
      *
-     * These values can legitimately exist on real devices.
+     * are intentionally NOT used because they can exist
+     * on legitimate physical devices.
      */
     public static boolean isEmulator() {
         return getEmulatorScore() >= 3;
     }
 
     /**
-     * Calculates emulator score based on common emulator indicators.
-     *
-     * Strong indicators are weighted higher.
+     * Calculates emulator score based on emulator-specific indicators.
      */
     public static int getEmulatorScore() {
 
@@ -48,24 +49,26 @@ public class EmulatorDetector {
         }
 
         if (fingerprint.contains("goldfish")) {
-            score += 2;
+            score += 3;
         }
 
         if (fingerprint.contains("ranchu")) {
-            score += 2;
+            score += 3;
         }
 
         if (fingerprint.contains("sdk_gphone")) {
-            score += 2;
+            score += 3;
         }
 
-        if (fingerprint.contains("virtual")) {
-            score += 3;
-        }
-        if (fingerprint.contains("vmware")) {
-            score += 3;
-        }
         if (fingerprint.contains("qemu")) {
+            score += 3;
+        }
+
+        if (fingerprint.contains("virtualbox")) {
+            score += 3;
+        }
+
+        if (fingerprint.contains("vmware")) {
             score += 3;
         }
 
@@ -80,24 +83,26 @@ public class EmulatorDetector {
         }
 
         if (model.contains("emulator")) {
-            score += 2;
+            score += 3;
         }
 
         if (model.contains("android sdk")) {
-            score += 2;
+            score += 3;
         }
 
         if (model.contains("google_sdk")) {
-            score += 2;
+            score += 3;
         }
 
-        if (model.contains("virtual")) {
-            score += 3;
-        }
-        if (model.contains("vmware")) {
-            score += 3;
-        }
         if (model.contains("qemu")) {
+            score += 3;
+        }
+
+        if (model.contains("virtualbox")) {
+            score += 3;
+        }
+
+        if (model.contains("vmware")) {
             score += 3;
         }
 
@@ -108,16 +113,18 @@ public class EmulatorDetector {
         String manufacturer = safe(Build.MANUFACTURER);
 
         if (manufacturer.contains("genymotion")) {
-            score += 2;
+            score += 3;
         }
 
-        if (manufacturer.contains("virtual")) {
-            score += 3;
-        }
-        if (manufacturer.contains("vmware")) {
-            score += 3;
-        }
         if (manufacturer.contains("qemu")) {
+            score += 3;
+        }
+
+        if (manufacturer.contains("virtualbox")) {
+            score += 3;
+        }
+
+        if (manufacturer.contains("vmware")) {
             score += 3;
         }
 
@@ -128,15 +135,18 @@ public class EmulatorDetector {
         String brand = safe(Build.BRAND);
 
         if (brand.startsWith("generic")) {
-            score += 1;
+            score += 2;
         }
-        if (brand.contains("virtual")) {
-            score += 3;
-        }
-        if (brand.contains("vmware")) {
-            score += 3;
-        }
+
         if (brand.contains("qemu")) {
+            score += 3;
+        }
+
+        if (brand.contains("virtualbox")) {
+            score += 3;
+        }
+
+        if (brand.contains("vmware")) {
             score += 3;
         }
 
@@ -151,31 +161,25 @@ public class EmulatorDetector {
         }
 
         if (device.contains("emulator")) {
-            score += 2;
+            score += 3;
         }
 
         if (device.contains("goldfish")) {
-            score += 2;
+            score += 3;
         }
 
         if (device.contains("ranchu")) {
-            score += 2;
+            score += 3;
         }
 
         if (device.contains("vbox")) {
-            score += 2;
+            score += 3;
         }
 
         if (device.contains("sdk_gphone")) {
-            score += 2;
+            score += 3;
         }
 
-        if (device.contains("virtual")) {
-            score += 3;
-        }
-        if (device.contains("vmware")) {
-            score += 3;
-        }
         if (device.contains("qemu")) {
             score += 3;
         }
@@ -187,28 +191,26 @@ public class EmulatorDetector {
         String hardware = safe(Build.HARDWARE);
 
         if (hardware.contains("goldfish")) {
-            score += 2;
+            score += 3;
         }
 
         if (hardware.contains("ranchu")) {
-            score += 2;
+            score += 3;
         }
 
         if (hardware.contains("vbox")) {
-            score += 2;
+            score += 3;
         }
 
         if (hardware.contains("qemu")) {
-            score += 2;
-        }
-
-        if (hardware.contains("virtual")) {
             score += 3;
         }
+
+        if (hardware.contains("virtualbox")) {
+            score += 3;
+        }
+
         if (hardware.contains("vmware")) {
-            score += 3;
-        }
-        if (hardware.contains("qemu")) {
             score += 3;
         }
 
@@ -223,32 +225,34 @@ public class EmulatorDetector {
         }
 
         if (product.contains("emulator")) {
-            score += 2;
+            score += 3;
         }
 
         if (product.contains("simulator")) {
-            score += 2;
+            score += 3;
         }
 
         if (product.contains("vbox")) {
-            score += 2;
+            score += 3;
         }
 
         if (product.contains("goldfish")) {
-            score += 2;
+            score += 3;
         }
 
         if (product.contains("ranchu")) {
-            score += 2;
+            score += 3;
         }
 
-        if (product.contains("virtual")) {
-            score += 3;
-        }
-        if (product.contains("vmware")) {
-            score += 3;
-        }
         if (product.contains("qemu")) {
+            score += 3;
+        }
+
+        if (product.contains("virtualbox")) {
+            score += 3;
+        }
+
+        if (product.contains("vmware")) {
             score += 3;
         }
 
@@ -257,77 +261,16 @@ public class EmulatorDetector {
         // ==========================================================
 
         if (exists("/dev/qemu_pipe")) {
-            score += 2;
+            score += 3;
         }
 
         if (exists("/dev/qemu_trace")) {
-            score += 2;
+            score += 3;
         }
 
         if (exists("/system/bin/qemu-props")) {
-            score += 2;
-        }
-
-        // ==========================================================
-        // Host
-        // ==========================================================
-
-        String host = safe(Build.HOST);
-
-        if (host.contains("kvm")) {
             score += 3;
         }
-        if (host.contains("compiler")) {
-            score += 3;
-        }
-        if (host.contains("virtual")) {
-            score += 3;
-        }
-        if (host.contains("vmware")) {
-            score += 3;
-        }
-        if (host.contains("qemu")) {
-            score += 3;
-        }
-
-        // ==========================================================
-        // Radio
-        // ==========================================================
-
-        String radio = safe(Build.getRadioVersion());
-
-        if (radio.contains("kvm")) {
-            score += 3;
-        }
-        if (radio.contains("virtual")) {
-            score += 3;
-        }
-        if (radio.contains("vmware")) {
-            score += 3;
-        }
-        if (radio.contains("qemu")) {
-            score += 3;
-        }
-
-        String user = safe(Build.USER);
-
-        if (host.contains("kvm")) {
-            score += 3;
-        }
-        if (host.contains("virtual")) {
-            score += 3;
-        }
-        if (host.contains("vmware")) {
-            score += 3;
-        }
-        if (host.contains("qemu")) {
-            score += 3;
-        }
-        /*
-         * Do not use /system/bin/microdroid as a standalone
-         * emulator indicator. It can exist in legitimate Android
-         * environments.
-         */
 
         // ==========================================================
         // Return Score
@@ -348,7 +291,6 @@ public class EmulatorDetector {
         } catch (Exception e) {
 
             return false;
-
         }
     }
 
@@ -360,6 +302,5 @@ public class EmulatorDetector {
         return value == null
                 ? ""
                 : value.toLowerCase(Locale.US);
-
     }
 }
